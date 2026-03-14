@@ -1,0 +1,24 @@
+plugins {
+    id 'application'
+}
+
+dependencies {
+    implementation project(':api')
+}
+
+application {
+    mainClass = 'com.lsn.client.Application'
+}
+
+jar {
+    archiveFileName = 'lsn.jar'
+    manifest {
+        attributes 'Main-Class': 'com.lsn.client.Application'
+    }
+    from {
+        configurations.runtimeClasspath.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}

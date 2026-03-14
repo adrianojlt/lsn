@@ -1,8 +1,8 @@
 # LSN — Local Social Network
 
 A console-based Local Social Networking (LSN) application.
-I thought in designing with extensibility in mind, following a phased roadmap from a standalone console app to a fully networked, 
-real-time social network. The main requirement is **PHASE01**, but i want to try to evolve into a real communication 
+I thought in designing with extensibility in mind, following a phased roadmap from a standalone console app to a fully networked,
+real-time social network. The main requirement is **PHASE01**, but i want to try to evolve into a real communication
 console app.
 ---
 
@@ -10,14 +10,27 @@ console app.
 
 ```
 PHASE01   O  Console app, in-memory, standalone
-PHASE02   X  Spring Boot REST API + MongoDB
+PHASE02   O  Spring Boot REST API + MongoDB
 PHASE03   X  WebSockets, real-time, multi-client, authentication
 PHASE04   X  Kafka, Redis, scaling
 ```
 
 ---
 
-## PHASE01 - Getting Started
+## Project Structure
+
+Multi-module Gradle project:
+
+```
+lsn/
+  api/      — shared domain contract  (com.lsn.api)
+  client/   — console app             (com.lsn.client)
+  server/   — REST API                (com.lsn.server)
+```
+
+---
+
+## PHASE01 — Console Client
 
 ### Requirements
 - Java 21
@@ -25,12 +38,12 @@ PHASE04   X  Kafka, Redis, scaling
 
 ### Build
 ```bash
-./gradlew jar
+./gradlew :client:jar
 ```
 
 ### Run
 ```bash
-java -jar build/libs/lsn.jar
+java -jar client/build/libs/lsn.jar
 ```
 
 ### Commands
@@ -47,7 +60,7 @@ Unknown commands print: `Unknown command: <input>`
 
 ### Example session
 ```
-$ java -jar build/libs/lsn.jar
+$ java -jar client/build/libs/lsn.jar
 
 Alice -> I love the weather today
 Bob -> Damn! We lost!
@@ -78,19 +91,61 @@ exit
 
 ---
 
+## PHASE02 — REST API Server
+
+### Requirements
+- Java 21
+- Gradle
+- MongoDB (or Docker)
+
+### Build
+```bash
+./gradlew :server:bootJar
+```
+
+### Run
+```bash
+MONGO_URI=mongodb://localhost:27017/lsn java -jar server/build/libs/server.jar
+```
+
+### Docker
+```bash
+docker build -t lsn-server ./server
+docker run --rm -e MONGO_URI=mongodb://host.docker.internal:27017/lsn -p 8080:8080 lsn-server
+```
+
+### Endpoints
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/health` | Health check → `{"status":"ok"}` |
+| `POST` | `/users/{username}/posts` | Publish a post |
+| `GET` | `/users/{username}/posts` | Read a user's timeline (newest first) |
+| `POST` | `/users/{username}/following` | Follow another user |
+| `GET` | `/users/{username}/wall` | Aggregated wall (own + followed, newest first) |
+
+### Example
+```bash
+curl -X POST http://localhost:8080/users/alice/posts \
+     -H 'Content-Type: application/json' \
+     -d '{"content":"I love the weather today"}'
+
+curl http://localhost:8080/users/alice/posts
+# [{"content":"I love the weather today","postedAt":"2026-03-13T10:00:00Z"}]
+
+curl -X POST http://localhost:8080/users/charlie/following \
+     -H 'Content-Type: application/json' \
+     -d '{"target":"alice"}'
+
+curl http://localhost:8080/users/charlie/wall
+# [{"username":"alice","content":"I love the weather today","postedAt":"2026-03-13T10:00:00Z"}]
+```
+
+---
+
 ## Architecture
 
-Strict layering — each layer depends only on the one below it:
-
-```
-- Console
-- CommandParser
-- SocialNetworkService  -> business logic
-- SocialNetworkRepository (interface)
-- InMemoryRepository    -> in-memory implementation (PHASE01)
-```
-
-###  Design Decisions
+### Design Decisions
 
 **Sealed Command hierarchy**
 Each user action is modeled as an immutable record implementing a sealed interface.
@@ -98,9 +153,9 @@ The sealed hierarchy forces exhaustive handling in switch expressions — no acc
 missing-case bugs.
 
 **Repository as an interface**
-`SocialNetworkRepository` is an interface. `InMemoryRepository` is the only implementation
-in PHASE01. In PHASE02 a MongoDB implementation will replace it without having to touch the
-service layer.
+`SocialNetworkRepository` is defined once in the `api` module and implemented by both
+`client` (via `InMemoryRepository`) and `server` (via `MongoSocialNetworkRepository`).
+The service layer in both modules is coded against the interface — no implementation details leak up.
 
 **Clock injection**
 `SocialNetworkService` receives a `java.time.Clock` via constructor injection.
@@ -109,44 +164,42 @@ service layer.
 **CommandParser is pure**
 `CommandParser` has no I/O, no side effects, no static state.
 It is a pure function: `String -> Optional<Command>`.
-It will be reused in the HTTP client in PHASE02.
 
 ---
 
 ## Testing
 
 ```bash
+# all modules
 ./gradlew test
+
+# individual
+./gradlew :client:test
+./gradlew :server:test
 ```
 
-Test coverage report is generated at:
-```
-build/reports/jacoco/test/html/index.html
-```
+### Client test coverage
 
-### Testing approach
+| Layer | Approach |
+|---|---|
+| `CommandParser` | Unit tests — all command types and edge cases |
+| `TimeFormatter` | Unit tests — all duration thresholds, singular/plural |
+| `SocialNetworkService` | Unit tests — fixed `Clock`, all scenarios |
+| Full scenario | Integration test — end-to-end replay of the spec |
+| REPL wiring | Manual smoke test |
 
-The project follows **Test-Driven Development (TDD)** — tests were written before
-implementation following the Red/Green/Refactor cycle. The commit history reflects
-this process step by step.
+### Server test coverage
 
-| Layer | Approach                                              |
-|---|-------------------------------------------------------|
-| `CommandParser` | Unit tests - all command types and edge cases         |
-| `TimeFormatter` | Unit tests - all duration thresholds, singular/plural |
-| `SocialNetworkService` | Unit tests - fixed `Clock`, all scenarios             |
-| Full scenario | Integration test - end-to-end replay of the spec      |
-| REPL wiring | Manual smoke test                                     |
+| Layer | Approach |
+|---|---|
+| `HealthController` | MockMvc — status 200, body |
+| `PostController` | MockMvc — valid/invalid POST, GET newest-first with ISO timestamps |
+| `FollowController` | MockMvc — valid/invalid follow, wall aggregation |
+| `MongoSocialNetworkRepository` | `@DataMongoTest` + embedded Mongo — save, timeline, follow, wall |
 
 ---
 
 ## Future Phases
-
-### PHASE02 — REST API + MongoDB
-- Spring Boot REST API exposing the four commands over HTTP
-- MongoDB for persistence
-- `InMemoryRepository` replaced by `MongoRepository` - no service changes required
-- Deployable via Docker
 
 ### PHASE03 — WebSockets + Authentication
 - Real-time feed updates pushed to connected clients

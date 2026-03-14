@@ -11,7 +11,7 @@ console app.
 ```
 PHASE01   O  Console app, in-memory, standalone
 PHASE02   O  Spring Boot REST API + MongoDB
-PHASE03   X  WebSockets, real-time, multi-client, authentication
+PHASE03   O  WebSockets, real-time, multi-client, authentication
 PHASE04   X  Kafka, Redis, scaling
 ```
 

@@ -13,8 +13,8 @@ public class PostDocument {
     @Id
     private String id;
 
-    private String username;
     private String content;
+    private String username;
     private Instant postedAt;
 
     public PostDocument() {}

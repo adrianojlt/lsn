@@ -14,6 +14,8 @@ public class UserDocument {
 
     private List<String> following = new ArrayList<>();
 
+    private String passwordHash;
+
     public UserDocument() {}
 
     public UserDocument(String username) {
@@ -34,5 +36,13 @@ public class UserDocument {
 
     public void setFollowing(List<String> following) {
         this.following = following;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 }

@@ -3,3 +3,8 @@ de:
     mongodb:
       embedded:
         version: 7.0.2
+
+lsn:
+  jwt:
+    secret: test-secret-key-for-tests-use-only-32chars!!
+    expiration-ms: 86400000

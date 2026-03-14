@@ -6,8 +6,6 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import java.util.List;
 
 public interface PostMongoRepository extends MongoRepository<PostDocument, String> {
-
     List<PostDocument> findByUsernameOrderByPostedAtDesc(String username);
-
     List<PostDocument> findByUsernameInOrderByPostedAtDesc(List<String> usernames);
 }

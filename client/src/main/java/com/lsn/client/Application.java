@@ -1,7 +1,9 @@
 package com.lsn.client;
 
-import com.lsn.client.repository.InMemoryRepository;
+import com.lsn.client.auth.AuthClient;
+import com.lsn.client.repository.HttpSocialNetworkRepository;
 import com.lsn.client.service.SocialNetworkService;
+import com.lsn.client.websocket.FeedListener;
 
 import java.time.Clock;
 import java.util.List;
@@ -13,14 +15,55 @@ public class Application {
 
         Scanner scanner = new Scanner(System.in);
         CommandParser parser = new CommandParser();
-        SocialNetworkService service = new SocialNetworkService(new InMemoryRepository(), Clock.systemUTC());
+        AuthClient authClient = new AuthClient();
+
+        System.out.print("Server URL [http://localhost:8383]: ");
+        String serverUrl = scanner.nextLine().trim();
+
+        if (serverUrl.isBlank()) {
+            serverUrl = "http://localhost:8383";
+        }
+
+        System.out.print("Username: ");
+        String username = scanner.nextLine().trim();
+
+        System.out.print("(l)ogin or (r)egister? ");
+        String choice = scanner.nextLine().trim().toLowerCase();
+
+        System.out.print("Password: ");
+        String password = scanner.nextLine().trim();
+
+        String token;
+
+        try {
+
+            if ("r".equals(choice)) {
+                authClient.register(serverUrl, username, password);
+                System.out.println("Registered successfully.");
+            }
+
+            token = authClient.login(serverUrl, username, password);
+        } catch (Exception e) {
+            System.err.println("Authentication failed: " + e.getMessage());
+            return;
+        }
+
+        FeedListener listener = new FeedListener(serverUrl, token);
+        listener.start();
+
+        SocialNetworkService service = new SocialNetworkService(
+                new HttpSocialNetworkRepository(serverUrl, token),
+                Clock.systemUTC());
+
+        System.out.println("Connected as " + username + ". Type 'exit' to quit.");
 
         while (scanner.hasNextLine()) {
 
             String line = scanner.nextLine().trim();
 
             if ("exit".equals(line)) {
-                break;
+                listener.disconnect();
+                System.exit(0);
             }
 
             parser.parse(line).ifPresentOrElse(

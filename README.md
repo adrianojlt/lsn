@@ -1,8 +1,8 @@
 # LSN — Local Social Network
 
 A console-based Local Social Networking (LSN) application.
-I thought in designing with extensibility in mind, following a phased roadmap from a standalone console app to a fully networked,
-real-time social network. The main requirement is **PHASE01**, but i want to try to evolve into a real communication
+I thought in designing with extensibility in mind, following a phased roadmap from a standalone console app to a networked,
+real-time social network. The main requirement is **PHASE01** (master branch), but i want to try to evolve into a real communication
 console app.
 ---
 
@@ -119,9 +119,11 @@ docker run --rm -e MONGO_URI=mongodb://host.docker.internal:27017/lsn -p 8080:80
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/health` | Health check → `{"status":"ok"}` |
-| `POST` | `/users/{username}/posts` | Publish a post |
+| `POST` | `/auth/register` | Register a new user |
+| `POST` | `/auth/login` | Login → returns JWT token |
+| `POST` | `/posts` | Publish a post (authenticated) |
 | `GET` | `/users/{username}/posts` | Read a user's timeline (newest first) |
-| `POST` | `/users/{username}/following` | Follow another user |
+| `POST` | `/following` | Follow another user (authenticated) |
 | `GET` | `/users/{username}/wall` | Aggregated wall (own + followed, newest first) |
 
 ### Example
@@ -199,12 +201,13 @@ It is a pure function: `String -> Optional<Command>`.
 
 ---
 
-## Future Phases
+## PHASE03 — Real-time + Authentication
 
-### PHASE03 — WebSockets + Authentication
-- Real-time feed updates pushed to connected clients
-- User authentication
-- Multi-client support
+Users can register and log in with a password. Every request and WebSocket connection is authenticated with a JWT token. Once connected, clients receive live feed events, new posts from followed users and follow notifications pushed instantly over WebSocket without polling.
+
+---
+
+## Future Phases
 
 ### PHASE04 — Scaling
 - Kafka or Redis Streams for event-driven feed updates

@@ -5,6 +5,7 @@ import java.time.Duration;
 public class TimeFormatter {
 
     public static String format(Duration duration) {
+
         long seconds = duration.toSeconds();
         long minutes = duration.toMinutes();
         long hours   = duration.toHours();

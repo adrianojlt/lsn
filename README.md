@@ -1,9 +1,10 @@
-# LSN — Local Social Network
+# LSN - Local Social Network
 
 A console-based Local Social Networking (LSN) application.
 I thought in designing with extensibility in mind, following a phased roadmap from a standalone console app to a fully networked, 
 real-time social network. The main requirement is **PHASE01**, but i want to try to evolve into a real communication 
-console app.
+console app (check **PHASE02** and **PHASE03** branches).
+
 ---
 
 ## Phased Roadmap
@@ -90,7 +91,7 @@ Strict layering — each layer depends only on the one below it:
 - InMemoryRepository    -> in-memory implementation (PHASE01)
 ```
 
-###  Design Decisions
+### Design Decisions
 
 **Sealed Command hierarchy**
 Each user action is modeled as an immutable record implementing a sealed interface.
@@ -142,18 +143,18 @@ this process step by step.
 
 ## Future Phases
 
-### PHASE02 — REST API + MongoDB
+### PHASE02 - REST API + MongoDB
 - Spring Boot REST API exposing the four commands over HTTP
 - MongoDB for persistence
 - `InMemoryRepository` replaced by `MongoRepository` - no service changes required
 - Deployable via Docker
 
-### PHASE03 — WebSockets + Authentication
+### PHASE03 - WebSockets + Authentication
 - Real-time feed updates pushed to connected clients
 - User authentication
 - Multi-client support
 
-### PHASE04 — Scaling
+### PHASE04 - Scaling
 - Kafka or Redis Streams for event-driven feed updates
 - Redis caching for wall aggregation
 - Horizontal scaling

@@ -1,9 +1,10 @@
-# LSN — Local Social Network
+# LSN - Local Social Network
 
 A console-based Local Social Networking (LSN) application.
 I thought in designing with extensibility in mind, following a phased roadmap from a standalone console app to a networked,
 real-time social network. The main requirement is **PHASE01** (master branch), but i want to try to evolve into a real communication
 console app.
+
 ---
 
 ## Phased Roadmap
@@ -30,7 +31,7 @@ lsn/
 
 ---
 
-## PHASE01 — Console Client
+## PHASE01 - Console Client
 
 ### Requirements
 - Java 21
@@ -91,7 +92,7 @@ exit
 
 ---
 
-## PHASE02 — REST API Server
+## PHASE02 - REST API Server
 
 ### Requirements
 - Java 21
@@ -201,7 +202,7 @@ It is a pure function: `String -> Optional<Command>`.
 
 ---
 
-## PHASE03 — Real-time + Authentication
+## PHASE03 - Real-time + Authentication
 
 Users can register and log in with a password. Every request and WebSocket connection is authenticated with a JWT token. Once connected, clients receive live feed events, new posts from followed users and follow notifications pushed instantly over WebSocket without polling.
 
@@ -209,7 +210,7 @@ Users can register and log in with a password. Every request and WebSocket conne
 
 ## Future Phases
 
-### PHASE04 — Scaling
+### PHASE04 - Scaling
 - Kafka or Redis Streams for event-driven feed updates
 - Redis caching for wall aggregation
 - Horizontal scaling
